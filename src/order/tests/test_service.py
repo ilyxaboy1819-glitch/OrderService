@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock
 
 import pytest
-from fastapi import HTTPException
 
+from src.order.exceptions import NotFoundException
 from src.order.models import OrderModel, OrderItemModel, OrderStatus
 from src.order.schemas import OrderCreate, OrderItemCreate, OrderRead, OrderItemRead
 from src.order.service import OrderService
@@ -100,6 +100,5 @@ async def test_get_by_id_cache_hit(service, mock_repo, mock_redis):
 @pytest.mark.asyncio
 async def test_get_by_id_not_found(service, mock_repo):
     mock_repo.get_by_id.return_value = None
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(NotFoundException):
         await service.get_by_id(uuid.uuid4())
-    assert exc_info.value.status_code == 404

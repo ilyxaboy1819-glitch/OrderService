@@ -1,7 +1,2 @@
-from fastapi import HTTPException
-from http import HTTPStatus
-
-
-class NotFoundException(HTTPException):
-    def __init__(self, detail: str):
-        super().__init__(status_code=HTTPStatus.NOT_FOUND, detail=detail)
+class NotFoundException(Exception):
+    """Entity not found. Handled by exception_handler in main.py → 404."""
