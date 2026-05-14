@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import List
 
 from pydantic import BaseModel, Field
 
@@ -63,3 +64,11 @@ class OrderRead(BaseModel):
     user_name: str | None = None
 
     model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_model(cls, model: OrderModel) -> "OrderRead":
+        return cls.model_validate(model)
+
+    @classmethod
+    def from_list(cls, models: List[OrderModel]) -> List["OrderRead"]:
+        return [cls.from_model(m) for m in models]

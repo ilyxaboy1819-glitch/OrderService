@@ -22,7 +22,7 @@ class OrderService:
         model = data.to_model()
         saved = await self._repo.create(model)
         logger.info(f"Order created with id={saved.id}")
-        return OrderRead.model_validate(saved)
+        return OrderRead.from_model(saved)
 
     async def get_by_id(self, order_id: uuid.UUID) -> OrderRead:
         cache_key = f"order:{order_id}"
@@ -36,6 +36,6 @@ class OrderService:
         if not model:
             raise NotFoundException(f"Order with id={order_id} not found")
 
-        result = OrderRead.model_validate(model)
+        result = OrderRead.from_model(model)
         await self._redis.set(cache_key, result.model_dump_json(), ex=CACHE_TTL)
         return result

@@ -1,11 +1,13 @@
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
+from alembic import command
+from alembic.config import Config
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.pool import NullPool
 from testcontainers.postgres import PostgresContainer
 
 from src.main import create_app
-from src.order.models import Base
 from src.database import get_session
 from src.order.repository import OrderRepository
 
@@ -21,14 +23,17 @@ def db_url(postgres_container):
     return postgres_container.get_connection_url().replace("psycopg2", "asyncpg")
 
 
-@pytest_asyncio.fixture
-async def db_engine(db_url):
-    engine = create_async_engine(db_url)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+@pytest.fixture(scope="session")
+def _run_migrations(db_url):
+    alembic_cfg = Config("alembic.ini")
+    alembic_cfg.set_main_option("sqlalchemy.url", db_url)
+    command.upgrade(alembic_cfg, "head")
+
+
+@pytest_asyncio.fixture(scope="session")
+async def db_engine(db_url, _run_migrations):
+    engine = create_async_engine(db_url, poolclass=NullPool)
     yield engine
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
 

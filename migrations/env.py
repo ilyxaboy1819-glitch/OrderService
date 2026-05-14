@@ -39,7 +39,8 @@ def do_run_migrations(connection):
 
 
 async def run_async_migrations() -> None:
-    connectable = create_async_engine(str(settings.postgres_url))
+    url = config.get_main_option("sqlalchemy.url")
+    connectable = create_async_engine(url)
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
     await connectable.dispose()
