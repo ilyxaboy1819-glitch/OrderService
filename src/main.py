@@ -3,7 +3,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import UJSONResponse
 
-from src.exceptions.handler import not_found_handler
+from src.handler import not_found_handler
 from src.order.exceptions import NotFoundException
 from src.order.router import router as order_router
 

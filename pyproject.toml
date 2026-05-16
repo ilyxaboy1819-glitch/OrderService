@@ -30,7 +30,7 @@ fakeredis = ">=2.25.0,<3.0.0"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["src/order/tests"]
+testpaths = ["tests"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
