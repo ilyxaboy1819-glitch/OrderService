@@ -21,8 +21,10 @@ class OrderService:
     async def create(self, data: OrderCreate) -> OrderRead:
         model = data.to_model()
         saved = await self._repo.create(model)
+        result = OrderRead.from_model(saved)
+        await self._redis.set(f"order:{saved.id}", result.model_dump_json(), ex=CACHE_TTL)
         logger.info(f"Order created with id={saved.id}")
-        return OrderRead.from_model(saved)
+        return result
 
     async def get_by_id(self, order_id: uuid.UUID) -> OrderRead:
         cache_key = f"order:{order_id}"
