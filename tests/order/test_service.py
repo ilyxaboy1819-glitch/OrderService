@@ -70,17 +70,19 @@ async def test_create_order(service, mock_repo):
 async def test_get_by_id_cache_miss(service, mock_repo, mock_redis):
     model = _make_order_model()
     mock_repo.get_by_id.return_value = model
+    service._safe_cache_get = AsyncMock(return_value=None)
+    service._safe_cache_set = AsyncMock()
 
     result = await service.get_by_id(model.id)
 
-    mock_redis.get.assert_called_once()
+    service._safe_cache_get.assert_called_once_with(f"order:{model.id}")
     mock_repo.get_by_id.assert_called_once_with(model.id)
-    mock_redis.set.assert_called_once()
+    service._safe_cache_set.assert_called_once()
     assert result is not None
 
 
 @pytest.mark.asyncio
-async def test_get_by_id_cache_hit(service, mock_repo, mock_redis):
+async def test_get_by_id_cache_hit(service, mock_repo):
     order_read = OrderRead(
         id=uuid.uuid4(),
         user_id=uuid.uuid4(),
@@ -89,7 +91,7 @@ async def test_get_by_id_cache_hit(service, mock_repo, mock_redis):
         is_deleted=False,
         created_at=datetime.now(timezone.utc),
     )
-    mock_redis.get.return_value = order_read.model_dump_json()
+    service._safe_cache_get = AsyncMock(return_value=order_read.model_dump_json())
 
     result = await service.get_by_id(order_read.id)
 
