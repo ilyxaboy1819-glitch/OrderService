@@ -19,6 +19,7 @@ class OrderCreate(BaseModel):
     user_id: uuid.UUID
     user_email: str | None = None
     user_name: str | None = None
+    idempotency_key: str | None = None
     items: list[OrderItemCreate] = Field(min_length=1, max_length=50)
 
     def to_model(self) -> OrderModel:
@@ -28,6 +29,7 @@ class OrderCreate(BaseModel):
             status=OrderStatus.NEW.value,
             user_email=self.user_email,
             user_name=self.user_name,
+            idempotency_key=self.idempotency_key,
             items=[
                 OrderItemModel(
                     id=uuid.uuid4(),
@@ -40,6 +42,14 @@ class OrderCreate(BaseModel):
                 for item in self.items
             ],
         )
+
+
+class KafkaOrderPayload(BaseModel):
+    user_id: str
+    user_email: str | None = None
+    user_name: str | None = None
+    items: list[OrderItemCreate] = Field(min_length=1, max_length=50)
+    idempotency_key: str | None = None
 
 
 class OrderItemRead(BaseModel):

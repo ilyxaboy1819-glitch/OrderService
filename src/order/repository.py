@@ -25,3 +25,10 @@ class OrderRepository:
             .options(selectinload(OrderModel.items))
         )
         return result.scalar_one_or_none()
+
+    async def get_by_idempotency_key(self, key: str) -> OrderModel | None:
+        result = await self._session.execute(
+            select(OrderModel)
+            .where(OrderModel.idempotency_key == key, OrderModel.is_deleted == False)
+        )
+        return result.scalar_one_or_none()
