@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import uuid
 
@@ -40,19 +41,29 @@ async def kafka_consumer() -> None:
 
 
 async def _handle(msg, dlq_producer: AIOKafkaProducer) -> None:
+    last_error = None
     for attempt in range(MAX_RETRIES):
         try:
             await _process(msg)
             return
         except Exception as e:
+            last_error = e
             logger.warning(f"Failed to process message attempt={attempt + 1}: {e}")
             if attempt < MAX_RETRIES - 1:
                 await asyncio.sleep(RETRY_DELAY * (attempt + 1))
 
     logger.error(f"Message failed after {MAX_RETRIES} attempts, sending to DLQ")
+    dlq_value = json.dumps({
+        "original_message": msg.value.decode(),
+        "error_reason": str(last_error),
+        "retry_count": MAX_RETRIES,
+        "topic": msg.topic,
+        "partition": msg.partition,
+        "offset": msg.offset,
+    }).encode()
     await dlq_producer.send_and_wait(
         settings.kafka_dlq_topic,
-        value=msg.value,
+        value=dlq_value,
         key=msg.key,
     )
 
@@ -63,11 +74,10 @@ async def _process(msg) -> None:
     async with SessionFactory() as session:
         repo = OrderRepository(session)
 
-        if payload.idempotency_key:
-            existing = await repo.get_by_idempotency_key(payload.idempotency_key)
-            if existing:
-                logger.info(f"Duplicate message, idempotency_key={payload.idempotency_key}")
-                return
+        existing = await repo.get_by_idempotency_key(payload.idempotency_key)
+        if existing:
+            logger.info(f"Duplicate message, idempotency_key={payload.idempotency_key}")
+            return
 
         data = OrderCreate(
             user_id=uuid.UUID(payload.user_id),

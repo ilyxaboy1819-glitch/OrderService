@@ -49,7 +49,7 @@ class KafkaOrderPayload(BaseModel):
     user_email: str | None = None
     user_name: str | None = None
     items: list[OrderItemCreate] = Field(min_length=1, max_length=50)
-    idempotency_key: str | None = None
+    idempotency_key: str
 
 
 class OrderItemRead(BaseModel):
