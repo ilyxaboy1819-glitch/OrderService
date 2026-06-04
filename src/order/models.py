@@ -33,6 +33,7 @@ class OrderModel(Base):
     )
     user_email: Mapped[str | None] = mapped_column(sa.String(255), nullable=True)
     user_name: Mapped[str | None] = mapped_column(sa.String(255), nullable=True)
+    idempotency_key: Mapped[str] = mapped_column(sa.String(36), nullable=False, unique=True)
 
     items: Mapped[list["OrderItemModel"]] = relationship(
         "OrderItemModel", back_populates="order", cascade="all, delete-orphan"
