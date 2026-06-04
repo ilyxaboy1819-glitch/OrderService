@@ -19,7 +19,7 @@ class OrderCreate(BaseModel):
     user_id: uuid.UUID
     user_email: str | None = None
     user_name: str | None = None
-    idempotency_key: str | None = None
+    idempotency_key: str
     items: list[OrderItemCreate] = Field(min_length=1, max_length=50)
 
     def to_model(self) -> OrderModel:

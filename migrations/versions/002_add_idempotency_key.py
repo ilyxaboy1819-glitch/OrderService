@@ -18,7 +18,7 @@ depends_on: Union[str, None] = None
 
 
 def upgrade() -> None:
-    op.add_column('orders', sa.Column('idempotency_key', sa.String(36), nullable=True))
+    op.add_column('orders', sa.Column('idempotency_key', sa.String(36), nullable=False))
     op.create_unique_constraint('uq_orders_idempotency_key', 'orders', ['idempotency_key'])
 
 
